@@ -52,9 +52,11 @@ function log(text) {
  * to make sure we're doing the same thing
  */
 function videoCapture() {
+    log('Calling videoCapture');
     new Promise((resolve, reject) => {
         navigator.device.capture.captureVideo(
           function (mediaFiles) {
+            log('Captured video, returning mediaFile');
               resolve(mediaFiles[0]);
           },
           function (err) {
@@ -74,7 +76,7 @@ function videoCapture() {
 
 function successVideo(mediaFile) {
     let videoUrl = mediaFile.fullPath;
-    log('Full path: ' + videoUrl);
+    log('successVideo: videoUrl: ' + videoUrl);
 
     return new Promise((resolve, reject) => {
         window.resolveLocalFileSystemURL(
@@ -85,8 +87,7 @@ function successVideo(mediaFile) {
                     setTimeout(() => {
                         const reader = new FileReader();
                         reader.onloadend = function () {
-                          log("reader.onloadend");
-                          log(`capture: result: ${this.result}, error: ${JSON.stringify(this.error)}`);
+                          log(`reader.onloadend: ${this.result}, error: ${JSON.stringify(this.error)}`);
                           resolve([this.result, file, entry]);
                         };
                         reader.onerror = function (ev) {

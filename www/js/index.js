@@ -36,6 +36,8 @@ var app = {
         let cameraElement = parentElement.querySelector('.camera');
 
         cameraElement.onclick = () => captureVideoErrorOnAndroid();
+
+        parentElement.querySelector('.camera2').onclick = () => videoCapture();
         log(id);
     }
 };
@@ -70,6 +72,65 @@ function captureVideoErrorOnAndroid() {
             }, printError);
         }, printError)
     }, printError, { limit: 1, quality: 0, duration: 10 })
+}
+
+/**
+ * Adding sample code from this issue https://github.com/apache/cordova-plugin-media-capture/issues/135
+ * to make sure we're doing the same thing
+ */
+function videoCapture() {
+    new Promise((resolve, reject) => {
+        navigator.device.capture.captureVideo(
+          function (mediaFiles) {
+              resolve(mediaFiles[0]);
+          },
+          function (err) {
+              reject(err);
+          },
+          {
+              limit: 1,
+              duration: 30
+          }
+        );
+    })
+      .then(mediaFile => successVideo(mediaFile))
+      .then(result => log(JSON.stringify(result)))
+      .catch(err => {
+          log(err);
+          console.log(err);
+      });
+}
+
+function successVideo(mediaFile) {
+    let videoUrl = mediaFile.fullPath;
+
+    return new Promise((resolve, reject) => {
+        window.resolveLocalFileSystemURL(
+          videoUrl,
+          function (entry) {
+              entry.file(
+                function (file) {
+                    setTimeout(() => {
+                        const reader = new FileReader();
+                        reader.onloadend = function () {
+                            resolve([this.result, file, entry]);
+                        };
+                        reader.onerror = function (ev) {
+                            reject(ev);
+                        };
+                        reader.readAsArrayBuffer(file);
+                    }, 1000);
+                },
+                function (err) {
+                    reject(err);
+                }
+              );
+          },
+          function (err) {
+              reject(err);
+          }
+        );
+    });
 }
 
 app.initialize();

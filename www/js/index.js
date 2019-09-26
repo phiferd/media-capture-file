@@ -36,6 +36,8 @@ var app = {
         let cameraElement = parentElement.querySelector('.camera');
 
         cameraElement.onclick = () => captureVideoErrorOnAndroid();
+
+        parentElement.querySelector('.select-video').onclick = () => selectVideo();
         log(id);
     }
 };
@@ -70,6 +72,52 @@ function captureVideoErrorOnAndroid() {
             }, printError);
         }, printError)
     }, printError, { limit: 1, quality: 0, duration: 10 })
+}
+
+
+async function selectVideo() {
+    const printError = (e) => console.log(e);
+    const videoUrl = await this.openFilePicker();
+    log(`videoUrl: ${videoUrl}`);
+    return window.resolveLocalFileSystemURL(videoUrl, function (fileEntry) {
+        log(`Got fileEntry: ${JSON.stringify(fileEntry)}`)
+        fileEntry.file(function (file) {
+            log(`Got file: ${JSON.stringify(file)} `)
+            const reader = new FileReader();
+
+            reader.onloadend = function () {
+                log(`Result: ${this.result}, error: ${JSON.stringify(this.error)}`)
+            };
+            reader.readAsArrayBuffer(file);
+
+        }, printError);
+    }, printError)
+}
+
+function getOptions(srcType) {
+    return {
+        // Some common settings are 20, 50, and 100
+        quality: 50,
+        destinationType: Camera.DestinationType.FILE_URI,
+        // In this app, dynamically set the picture source, Camera or photo gallery
+        sourceType: srcType,
+        encodingType: Camera.EncodingType.JPEG,
+        mediaType: Camera.MediaType.VIDEO,
+        allowEdit: true,
+        correctOrientation: true  //Corrects Android orientation quirks
+    }
+}
+
+async function openFilePicker() {
+    return new Promise((resolve, reject) => {
+        const srcType = Camera.PictureSourceType.SAVEDPHOTOALBUM;
+        const options = getOptions(srcType);
+        navigator.camera.getPicture(function cameraSuccess(imageUri) {
+            resolve(imageUri);
+        }, function cameraError(error) {
+            reject(error);
+        }, options);
+    })
 }
 
 app.initialize();
